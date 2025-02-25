@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { request, ArcGISIdentityManager } from "@esri/arcgis-rest-request";
 import { readFile } from "fs/promises";
 import {
@@ -7,8 +8,6 @@ import {
   setItemAccess,
 } from "@esri/arcgis-rest-portal";
 import { exit } from "process";
-
-import "dotenv/config";
 
 // create a new authentication manager from the username and password stored in the .env file
 const username = process.env.USERNAME;

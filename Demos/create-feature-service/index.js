@@ -1,10 +1,16 @@
+import "dotenv/config";
 import { ArcGISIdentityManager } from "@esri/arcgis-rest-request";
 import {
   createFeatureService,
   addToServiceDefinition,
 } from "@esri/arcgis-rest-feature-service";
 
+// Authenticate with an API key
 const accessToken = process.env.ACCESS_TOKEN;
+
+if (!accessToken) {
+  throw new Error("An access token is required");
+}
 
 const getIdentity = async () => {
   return await ArcGISIdentityManager.fromToken({
