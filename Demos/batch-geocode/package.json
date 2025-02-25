@@ -1,0 +1,20 @@
+{
+  "name": "esri-dev-summit-2024-batch-geocoding-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r dotenv/config index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@esri/arcgis-rest-geocoding": "^4.0.2",
+    "@esri/arcgis-rest-portal": "^4.4.0",
+    "@esri/arcgis-rest-request": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "mime-types": "^2.1.35"
+  }
+}
