@@ -2,7 +2,6 @@ import "dotenv/config";
 import { ArcGISIdentityManager } from "@esri/arcgis-rest-request";
 import { searchItems, SearchQueryBuilder } from "@esri/arcgis-rest-portal";
 import { getOAuthApp } from "@esri/arcgis-rest-developer-credentials";
-import { link } from "fs";
 
 /**
  * Get environment variables from the .env file. Loading this file is handled by the dotenv package.
@@ -27,7 +26,7 @@ const authentication = await ArcGISIdentityManager.signIn({
  */
 async function getAllRegisteredApps() {
   const user = await authentication.getUser();
-  const orgId = user.orgId;
+  const orgId = user.orgId as string;
 
   // `SearchQueryBuilder` is a helper class that makes it easier to build complex queries.
   const query = new SearchQueryBuilder()
