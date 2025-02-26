@@ -11,7 +11,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@esri/arcgis-rest-developer-credentials": "^2.0.0",
     "@esri/arcgis-rest-request": "^4.3.0",
     "@types/node": "^22.13.5",
     "dotenv": "^16.4.7"
