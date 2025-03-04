@@ -1,0 +1,24 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "BatchGeocode",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/batch-geocode/index.js",
+      "envFile": "${workspaceFolder}/batch-geocode/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "CreateFeatureService",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/create-feature-service/index.js",
+      "envFile": "${workspaceFolder}/create-feature-service/.env"
+    }
+  ]
+}

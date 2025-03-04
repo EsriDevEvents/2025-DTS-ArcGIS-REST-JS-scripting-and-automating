@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+  <head>
+    <title>Esri Leaflet Tutorial: Display a map (with user authentication)</title>
+    <script src="https://unpkg.com/@esri/arcgis-rest-request@4/dist/bundled/request.umd.js"></script>
+  </head>
+  <body>
+    <script>
+
+      // Your client ID from OAuth credentials
+      const clientId = '7myDKYCwH7QuqzfM';
+      // The redirect URL registered in your OAuth credentials
+      const redirectUri = 'https://local.arcgis.com:5501/batch-geocode/callback.html';
+
+      arcgisRest.ArcGISIdentityManager.completeOAuth2({
+          clientId,
+          redirectUri
+      })
+    </script>
+  </body>
+</html

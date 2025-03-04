@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
+
+    <style>
+      .cntnr {
+        width: 255px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <calcite-shell>
+      <calcite-navigation navigationAction label="Label" slot="header">
+        <calcite-navigation-logo slot="logo" heading="Header heading" description="Header description"></calcite-navigation-logo>
+        <calcite-navigation-user id="navUser" slot="user" label="Sign in"></calcite-navigation-user>
+      </calcite-navigation>
+      <calcite-shell-panel slot="panel-start" position="start" id="startPanel">
+        <calcite-panel id="tools" heading="Upload file" disabled>
+          <div style="margin: 10px">
+            <calcite-label>
+              1. Add file
+              <!-- <calcite-input id="fileInputElem" type="file" scale="s"> </calcite-input> -->
+              <input id="fileInputElem" type="file" accept=".csv" />
+            </calcite-label>
+            <calcite-button id="generateButton">Generate</calcite-button>
+          </div>
+        </calcite-panel>
+      </calcite-shell-panel>
+      <calcite-panel>
+        <calcite-alert id="alert" placement="top" kind="success">
+          <div id="alertTitle" slot="title">Title</div>
+          <div id="alertMessage" slot="message">Message</div>
+          <calcite-link id="alertLink" slot="link">View data service</calcite-link>
+        </calcite-alert>
+        <calcite-table id="fileTable" caption="CSV Data" striped></calcite-table>
+      </calcite-panel>
+    </calcite-shell>
+
+    <script type="module">
+      import { createItem, searchItems, removeItem, setItemAccess } from "https://esm.run/@esri/arcgis-rest-portal"
+      import { request, ArcGISIdentityManager } from "https://esm.run/@esri/arcgis-rest-request"
+
+      let file, auth
+
+      const showAlert = (title, msg, link, visible) => {
+        const a = document.getElementById("alert")
+        a.open = visible
+
+        document.getElementById("alertTitle").innerText = title
+        document.getElementById("alertMessage").innerText = msg
+        document.getElementById("alertLink").href = link
+      }
+
+      const addRows = (rows, asHeader) => {
+        const t = document.getElementById("fileTable")
+        const ctr = document.createElement("calcite-table-row")
+        t.appendChild(ctr)
+        rows.forEach(r => {
+          const row = asHeader ? document.createElement("calcite-table-header") : document.createElement("calcite-table-cell")
+          asHeader ? (row.heading = r) : (row.innerText = r.replace(/\"/g, ""))
+          ctr.appendChild(row)
+        })
+      }
+
+      const removeItems = async () => {
+        const items = await searchItems({
+          q: `title:"DTS 2025 New feature service from CSV" AND owner:"${auth.username}"`,
+          authentication: auth,
+        })
+
+        if (items.results.length > 0) {
+          await Promise.all([
+            items.results.map(({ id, title, type }) => {
+              console.log(`Deleting ${type} ${id} with title ${title}`)
+              return removeItem({ id, authentication: auth })
+            }),
+          ])
+        }
+        // wait for 1 second to allow time for the items to be deleted
+        await new Promise(r => setTimeout(r, 1000))
+      }
+
+      document.getElementById("navUser").addEventListener("click", async () => {
+        auth = await ArcGISIdentityManager.beginOAuth2({
+          clientId: "7myDKYCwH7QuqzfM",
+          redirectUri: "https://local.arcgis.com:5501/batch-geocode/callback.html",
+        })
+
+        const u = await auth.getUser()
+        const nav = document.getElementById("navUser")
+        nav.username = u.username
+        nav.fullName = u.fullName
+        nav.userId = u.id
+
+        document.getElementById("tools").removeAttribute("disabled")
+      })
+
+      document.getElementById("generateButton").addEventListener("click", async () => {
+        const btn = event.target
+        btn.loading = true
+        // remove any data from previous runs
+        await removeItems()
+
+        const item = await createItem({
+          item: {
+            title: "DTS 2025 New feature service from CSV",
+            type: "CSV",
+            file: file,
+          },
+          authentication: auth,
+        })
+
+        const analyze = await request(`${auth.portal}/content/features/analyze`, {
+          authentication: auth,
+          params: {
+            itemId: item.id,
+            fileType: "csv",
+            analyzeParameters: {
+              enableGlobalGeocoding: true,
+              sourceLocale: "en",
+              returnEstimatedRowCount: true,
+              returnSize: true,
+              fieldTypesVersion: "V2",
+              geocodeServiceUrl: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
+              sourceCountryHint: "us",
+              sourceCountry: "",
+            },
+          },
+        })
+        analyze.publishParameters.name = `DTS 2025 New feature service from CSV_${Date.now()}`
+
+        const publish = await request(`${auth.portal}/content/users/${auth.username}/publish`, {
+          authentication: auth,
+          params: {
+            itemId: item.id,
+            filetype: "csv",
+            publishParameters: analyze.publishParameters,
+          },
+        })
+        console.log("\nItem published", publish)
+
+        showAlert(`${item.id} - Service created`, `New message`, `${publish.services[0].serviceurl}`, true)
+        btn.loading = false
+      })
+
+      document.getElementById("fileInputElem").addEventListener("change", evt => {
+        const fileInput = evt.target
+        if (fileInput.files.length === 1) {
+          const f = fileInput.files[0]
+          file = f
+          const r = new FileReader()
+          r.onload = evt => {
+            const s = evt.target.result.split("\n")
+            addRows(s[0].split(","), true)
+            s.forEach((rs, ndx) => {
+              if (ndx > 0) {
+                const cells = rs.split(",")
+                addRows([cells[0], `${cells[1]}, ${cells[2]}, ${cells[3]}`, cells[4]], false)
+              }
+            })
+          }
+          r.readAsText(f)
+        }
+      })
+
+      document.getElementById("fileInputElem").value = null
+      showAlert("", "", "", false)
+    </script>
+  </body>
+</html>
