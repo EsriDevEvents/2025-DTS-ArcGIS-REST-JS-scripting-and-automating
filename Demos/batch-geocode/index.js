@@ -1,8 +1,10 @@
 import "dotenv/config"
-import { request, ArcGISIdentityManager } from "@esri/arcgis-rest-request"
-import { readFile } from "fs/promises"
-import { createItem, searchItems, removeItem, setItemAccess } from "@esri/arcgis-rest-portal"
 import { exit } from "process"
+import { readFile } from "fs/promises"
+
+import { queryFeatures } from "@esri/arcgis-rest-feature-service"
+import { request, ArcGISIdentityManager } from "@esri/arcgis-rest-request"
+import { createItem, searchItems, removeItem, setItemAccess } from "@esri/arcgis-rest-portal"
 
 // create a new authentication manager from the username and password stored in the .env file
 const username = process.env.USERNAME
@@ -18,11 +20,11 @@ const authentication = await ArcGISIdentityManager.signIn({
 })
 
 const user = await authentication.getUser()
-console.log(`logged in as ${user.username}`)
+console.log(`Logged in as ${user.username}`)
 
 // check that items with the title "Palm Springs Places" and delete them if they exist
 // this is for this demo to make sure it can be re-run continuously
-console.log("\nChecking for existing items")
+console.log("\nChecking for existing items...")
 
 const existingItems = await searchItems({
   q: `title:"Palm Springs Places" AND owner:"${authentication.username}"`,
@@ -38,7 +40,7 @@ if (existingItems.results.length > 0) {
   ])
 
   // wait for 1 second to allow time for the items to be deleted
-  await new Promise(r => setTimeout(r, 1000))
+  await new Promise(r => setTimeout(r, 2000))
 
   console.log(`Deleted ${existingItems.results.length} existing items`)
 } else {
@@ -90,8 +92,21 @@ const publishResponse = await request(`${authentication.portal}/content/users/${
 })
 console.log("\nItem published", publishResponse)
 
+// allow time for the service to be spun up
+await new Promise(r => setTimeout(r, 3000))
+
+// https://developers.arcgis.com/arcgis-rest-js/api-reference/arcgis-rest-feature-service/IQueryFeaturesOptions/#Properties
+const queryResponse = await queryFeatures({
+  authentication,
+  url: `${publishResponse.services[0].serviceurl}/0`,
+  where: "1=1",
+  returnCountOnly: true,
+})
+console.log(`\nQuery new service: ${queryResponse.count} features returned`)
+
 if (user.userLicenseTypeId.startsWith("location")) {
-  console.log("Public sharing not supported for ArcGIS Location Platform accounts")
+  console.log("Sharing publicly not available for ArcGIS Location Platform accounts")
+  console.log(`\nView item https://www.arcgis.com/home/item.html?id=${publishResponse.services[0].serviceItemId}`)
   exit(0)
 }
 
@@ -104,6 +119,6 @@ const sharingResponses = await Promise.all(
     })
   })
 )
-
 console.log("\nSharing item publicly", sharingResponses)
-console.log(`View item https://www.arcgis.com/home/item.html?id=${sharingResponses[0].itemId}`)
+
+console.log(`\nView item https://www.arcgis.com/home/item.html?id=${sharingResponses[0].itemId}`)
