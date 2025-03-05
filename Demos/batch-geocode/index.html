@@ -5,22 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
     <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
-
-    <style>
-      .cntnr {
-        width: 255px;
-        margin: 0 auto;
-      }
-    </style>
   </head>
   <body>
     <calcite-shell>
       <calcite-navigation navigationAction label="Label" slot="header">
-        <calcite-navigation-logo slot="logo" heading="Header heading" description="Header description"></calcite-navigation-logo>
+        <calcite-navigation-logo
+          slot="logo"
+          heading="New Feature service from CSV"
+          description="2025 Developer & Tech summit"
+          icon="code"
+        ></calcite-navigation-logo>
         <calcite-navigation-user id="navUser" slot="user" label="Sign in"></calcite-navigation-user>
       </calcite-navigation>
       <calcite-shell-panel slot="panel-start" position="start" id="startPanel">
-        <calcite-panel id="tools" heading="Upload file" disabled>
+        <calcite-panel id="tools" disabled>
           <div style="margin: 10px">
             <calcite-label>
               1. Add file
@@ -35,7 +33,7 @@
         <calcite-alert id="alert" placement="top" kind="success">
           <div id="alertTitle" slot="title">Title</div>
           <div id="alertMessage" slot="message">Message</div>
-          <calcite-link id="alertLink" slot="link">View data service</calcite-link>
+          <calcite-link id="alertLink" slot="link" target="_blank">View data service</calcite-link>
         </calcite-alert>
         <calcite-table id="fileTable" caption="CSV Data" striped></calcite-table>
       </calcite-panel>
@@ -69,7 +67,7 @@
 
       const removeItems = async () => {
         const items = await searchItems({
-          q: `title:"DTS 2025 New feature service from CSV" AND owner:"${auth.username}"`,
+          q: `title:"DTS_2025_CSV" AND owner:"${auth.username}"`,
           authentication: auth,
         })
 
@@ -87,7 +85,7 @@
 
       document.getElementById("navUser").addEventListener("click", async () => {
         auth = await ArcGISIdentityManager.beginOAuth2({
-          clientId: "7myDKYCwH7QuqzfM",
+          clientId: "7LQ2itccDmFFiFxM",
           redirectUri: "https://local.arcgis.com:5501/batch-geocode/callback.html",
         })
 
@@ -108,12 +106,14 @@
 
         const item = await createItem({
           item: {
-            title: "DTS 2025 New feature service from CSV",
+            title: "DTS_2025_CSV",
             type: "CSV",
             file: file,
+            //text: file,
           },
           authentication: auth,
         })
+        console.log(`Item created ${JSON.stringify(item)}`)
 
         const analyze = await request(`${auth.portal}/content/features/analyze`, {
           authentication: auth,
@@ -132,7 +132,8 @@
             },
           },
         })
-        analyze.publishParameters.name = `DTS 2025 New feature service from CSV_${Date.now()}`
+        analyze.publishParameters.name = `DTS_2025_CSV_${Date.now()}`
+        console.log(`Item analyzed ${JSON.stringify(analyze)}`)
 
         const publish = await request(`${auth.portal}/content/users/${auth.username}/publish`, {
           authentication: auth,
@@ -142,9 +143,14 @@
             publishParameters: analyze.publishParameters,
           },
         })
-        console.log("\nItem published", publish)
+        console.log("\nItem published", JSON.stringify(publish))
 
-        showAlert(`${item.id} - Service created`, `New message`, `${publish.services[0].serviceurl}`, true)
+        showAlert(
+          `New service created`,
+          `${publish.services[0].serviceItemId}`,
+          `https://www.arcgis.com/home/item.html?id=${publish.services[0].serviceItemId}?token=${auth.token}`,
+          true
+        )
         btn.loading = false
       })
 
@@ -156,6 +162,8 @@
           const r = new FileReader()
           r.onload = evt => {
             const s = evt.target.result.split("\n")
+            //file = evt.target.result
+            // file = new Blob([evt.target.result])
             addRows(s[0].split(","), true)
             s.forEach((rs, ndx) => {
               if (ndx > 0) {
@@ -169,6 +177,7 @@
       })
 
       document.getElementById("fileInputElem").value = null
+
       showAlert("", "", "", false)
     </script>
   </body>
