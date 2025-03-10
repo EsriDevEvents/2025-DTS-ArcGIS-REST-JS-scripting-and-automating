@@ -198,7 +198,7 @@ const createNewService = async () => {
   })
 
   console.log(
-    `New item and service created:\nid: https://www.arcgis.com/home/item.html?id=${newService.itemId}\nurl:${newService.serviceurl}`
+    `\nNew item and service created:\nid: https://www.arcgis.com/home/item.html?id=${newService.itemId}&token=${auth.token}\nurl:${newService.serviceurl}/0/?token=${auth.token}`
   )
 }
 

@@ -4,10 +4,6 @@ import { addFeatures, deleteFeatures } from "@esri/arcgis-rest-feature-service"
 import { getItemData, getItem, searchItems } from "@esri/arcgis-rest-portal"
 
 // Authenticate
-// const authentication = await ArcGISIdentityManager.signIn({
-//   username: process.env.ARCGIS_USERNAME,
-//   password: process.env.ARCGIS_PASSWORD,
-// })
 const authentication = await ArcGISIdentityManager.fromToken({
   token: process.env.ACCESS_TOKEN,
 })
@@ -18,10 +14,10 @@ const searchResponse = await searchItems({
   q: `title:"${process.env.FEATURE_SERVICE_NAME}" AND owner:"${authentication.username}"`,
   authentication,
 })
-
+// Get the item from the search response, in this case it'll be the first one
 const item = searchResponse.results[0]
 
-// Get an existing feature service by its itemID
+// Check that the item is a feature service, Get also get the feature service directly by its itemID using getItem
 // const item = await getItem(item.id, { authentication })
 if (!item & (item.type !== "Feature Service")) {
   console.log("Item is not a feature service")
