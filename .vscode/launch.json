@@ -19,6 +19,14 @@
       "skipFiles": ["<node_internals>/**"],
       "envFile": "${workspaceFolder}/Demos/batch-geocode/.env",
       "program": "${workspaceFolder}/Demos/batch-geocode/index.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "EditFeatures",
+      "skipFiles": ["<node_internals>/**"],
+      "envFile": "${workspaceFolder}/Demos/edit-feature-service/.env",
+      "program": "${workspaceFolder}/Demos/edit-feature-service/index.js"
     }
   ]
 }
