@@ -4,7 +4,7 @@ import { readFile } from "fs/promises"
 
 import { queryFeatures } from "@esri/arcgis-rest-feature-service"
 import { request, ArcGISIdentityManager } from "@esri/arcgis-rest-request"
-import { createItem, searchItems, removeItem, setItemAccess } from "@esri/arcgis-rest-portal"
+import { createItem, searchItems, removeItem, setItemAccess, getSelf } from "@esri/arcgis-rest-portal"
 
 // create a new authentication manager from the username and password stored in the .env file
 const username = process.env.USERNAME
@@ -14,6 +14,7 @@ if (!username || !password) {
   throw new Error("Username and password are required")
 }
 
+// authenticate
 const authentication = await ArcGISIdentityManager.signIn({
   username,
   password,
@@ -21,6 +22,8 @@ const authentication = await ArcGISIdentityManager.signIn({
 
 const user = await authentication.getUser()
 console.log(`Logged in as ${user.username}`)
+
+const portalSelf = await getSelf({ authentication })
 
 // check that items with the title "Palm Springs Places" and delete them if they exist
 // this is for this demo to make sure it can be re-run continuously
@@ -48,7 +51,7 @@ if (existingItems.results.length > 0) {
 }
 
 // next upload the CSV file and create an item
-const rawData = await readFile("./batch-geocode/palm-springs-places.csv")
+const rawData = await readFile("./Demos/batch-geocode/palm-springs-places.csv")
 const someBlob = new Blob([rawData])
 
 const item = await createItem({
@@ -62,6 +65,7 @@ const item = await createItem({
 console.log("\nCreated item", item.id)
 
 // analyze the CSV file to determine the schema and get the publish parameters to publish the service
+// https://developers.arcgis.com/rest/users-groups-and-items/analyze/
 const analyzeResult = await request(`${authentication.portal}/content/features/analyze`, {
   authentication,
   params: {
@@ -93,7 +97,7 @@ const publishResponse = await request(`${authentication.portal}/content/users/${
 console.log("\nItem published", publishResponse)
 
 // allow time for the service to be spun up
-await new Promise(r => setTimeout(r, 3000))
+await new Promise(r => setTimeout(r, 5000))
 
 // https://developers.arcgis.com/arcgis-rest-js/api-reference/arcgis-rest-feature-service/IQueryFeaturesOptions/#Properties
 const queryResponse = await queryFeatures({
@@ -121,4 +125,4 @@ const sharingResponses = await Promise.all(
 )
 console.log("\nSharing item publicly", sharingResponses)
 
-console.log(`\nView item https://www.arcgis.com/home/item.html?id=${sharingResponses[0].itemId}`)
+console.log(`\nView item https://${portalSelf.urlKey}.maps.arcgis.com/home/item.html?id=${sharingResponses[0].itemId}`)

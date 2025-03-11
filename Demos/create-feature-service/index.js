@@ -4,9 +4,9 @@ import {
   createFeatureService,
   addToServiceDefinition,
 } from "@esri/arcgis-rest-feature-service"
-import { searchItems, removeItem } from "@esri/arcgis-rest-portal"
+import { searchItems, removeItem, getSelf } from "@esri/arcgis-rest-portal"
 
-// Authenticate with an API key
+// Authenticate with an API key, must have proper privileges
 const accessToken = process.env.ACCESS_TOKEN
 const serviceName = process.env.FEATURE_SERVICE_NAME
 
@@ -14,6 +14,7 @@ if (!accessToken) {
   throw new Error("An access token is required")
 }
 
+// Instantiate the ArcGIS REST JS IdentityManager with our token
 const getIdentity = async () => {
   return await ArcGISIdentityManager.fromToken({
     token: accessToken,
@@ -33,7 +34,7 @@ const removeItems = async (authentication) => {
   if (existingItems.results.length > 0) {
     await Promise.all([
       existingItems.results.map(({ id, title, type }) => {
-        console.log(`Deleting ${type} ${id} with title ${title}`)
+        console.log(`\nDeleting ${type} ${id} with title ${title}`)
         return removeItem({ id, authentication })
       }),
     ])
@@ -41,20 +42,22 @@ const removeItems = async (authentication) => {
     // wait to allow time for the items to be deleted
     await new Promise((r) => setTimeout(r, 2000))
 
-    console.log(`Deleted ${existingItems.results.length} existing items`)
+    console.log(`\nDeleted ${existingItems.results.length} existing items`)
   } else {
-    console.log("No existing items found")
+    console.log("\nNo existing items found")
   }
 }
 
 const createNewService = async () => {
   // login to the portal
-  console.log("Logging in...")
   const auth = await getIdentity()
-  console.log(`\tSigned in as ${auth.username}`)
+  console.log(`\nLogged in as ${auth.username}`)
   await removeItems(auth)
 
+  const portalSelf = await getSelf({ authentication: auth })
+
   // define layer schema
+  // https://developers.arcgis.com/rest/services-reference/enterprise/add-to-definition-feature-service/#example-usage
   const layerSchema = [
     {
       name: serviceName,
@@ -188,7 +191,6 @@ const createNewService = async () => {
       spatialReference: { wkid: 4326 },
     },
   })
-  console.log("\t")
 
   console.log("\nAdding schema to new service...")
   // create layer
@@ -196,9 +198,12 @@ const createNewService = async () => {
     authentication: auth,
     layers: layerSchema,
   })
+  console.log(
+    `\nAdded layer ${newFeatureLayer.layers[0].name} to feature service`
+  )
 
   console.log(
-    `\nNew item and service created:\nid: https://www.arcgis.com/home/item.html?id=${newService.itemId}&token=${auth.token}\nurl:${newService.serviceurl}/0/?token=${auth.token}`
+    `\nNew service created:\nhttps://${portalSelf.urlKey}.maps.arcgis.com/home/item.html?id=${newService.itemId}&token=${auth.token}`
   )
 }
 

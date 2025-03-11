@@ -85,8 +85,8 @@
 
       document.getElementById("navUser").addEventListener("click", async () => {
         auth = await ArcGISIdentityManager.beginOAuth2({
-          clientId: "7myDKYCwH7QuqzfM",
-          redirectUri: "https://local.arcgis.com:5501/batch-geocode/callback.html",
+          clientId: "OQmOOCwNxaWIpb7k",
+          redirectUri: "https://local.arcgis.com:5501/Demos/batch-geocode/callback.html",
         })
 
         const u = await auth.getUser()
